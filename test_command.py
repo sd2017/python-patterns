@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 from command import MoveFileCommand
+from command import CopyFileCommand
 import os, shutil, subprocess, sys
 
 if sys.version_info < (2, 7):
@@ -27,11 +28,14 @@ class CommandTest(unittest.TestCase):
         """
         os.mkdir('test_command')
         open('test_command/foo.txt', 'w').close()
+        open('test_command/foo1.txt', 'w').close()
+
         self.__get_test_directory()
         self.command_stack = []
         self.command_stack.append(MoveFileCommand(os.path.join(self.test_dir, 'foo.txt'), os.path.join(self.test_dir, 'bar.txt')))
         self.command_stack.append(MoveFileCommand(os.path.join(self.test_dir, 'bar.txt'), os.path.join(self.test_dir, 'baz.txt')))
-
+        self.command_stack.append(CopyFileCommand(os.path.join(self.test_dir,'foo1.txt')))
+        self.command_stack.append(CopyFileCommand(os.path.join(self.test_dir,'Copy_foo1.txt')))
     def test_sequential_execution(self):
         self.command_stack[0].execute()
         output_after_first_execution = os.listdir(self.test_dir)
@@ -39,6 +43,10 @@ class CommandTest(unittest.TestCase):
         self.command_stack[1].execute()
         output_after_second_execution = os.listdir(self.test_dir)
         self.assertEqual(output_after_second_execution[0], 'baz.txt')
+
+        self.command_stack[2].execute()
+        output_after_second_execution = os.listdir(self.test_dir)
+        self.assertEqual(output_after_second_execution[2], 'baz.txt foo1.txt Copy_foo1.txt')
 
     def test_sequential_undo(self):
         self.command_stack = list(reversed(self.command_stack))
